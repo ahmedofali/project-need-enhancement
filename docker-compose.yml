@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  enhancemenet:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html/enhancemenet
+      - ./images/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - enhancemenet-app-network
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: images/php
+    networks:
+      - enhancemenet-app-network
+    working_dir: /var/www/html/enhancemenet
+    volumes:
+      - ./:/var/www/html/enhancemenet
+      - ./images/php/local.ini:/usr/local/etc/php/php.ini
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13.2-alpine
+    restart: always
+    volumes:
+      - enhancemenet-postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: enhancemenet_db
+    networks:
+      - enhancemenet-app-network
+    ports:
+      - 5432:5432
+
+networks:
+  enhancemenet-app-network:
+    driver: bridge
+
+volumes:
+  enhancemenet-postgres-data:
+  pgadmin-data:
